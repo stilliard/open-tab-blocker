@@ -11,8 +11,10 @@ chrome.webNavigation.onBeforeNavigate.addListener((details) => {
 
             // Check if the URL matches any site in this bucket
             const matchingSite = bucket.sites.find(site =>
-                // url.hostname.includes(site.url) || site.url.includes(url.hostname) // the problem with this was if you had x.com blocked it'd also block abcx.com, we only want to block x.com and any subdomains
-                url.hostname === site.url || url.hostname.endsWith('.' + site.url) // this is the fix
+                // block if the hostname matches the site URL or is a subdomain or if the full url (including protocol, path, etc) starts with the site URL
+                url.hostname === site.url
+                || url.hostname.endsWith('.' + site.url) // this is the fix
+                || url.href.startsWith(site.url)
             );
 
             if (matchingSite && shouldBlockForBucket(bucket)) {

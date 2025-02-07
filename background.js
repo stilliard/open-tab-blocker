@@ -1,4 +1,5 @@
-chrome.webNavigation.onBeforeNavigate.addListener((details) => {
+
+function handleNavigationChange(details) {
     if (details.frameId !== 0) return; // Only block main frame navigation
 
     chrome.storage.sync.get(['buckets'], (result) => {
@@ -25,7 +26,10 @@ chrome.webNavigation.onBeforeNavigate.addListener((details) => {
             }
         }
     });
-});
+}
+
+chrome.webNavigation.onBeforeNavigate.addListener(handleNavigationChange); // new page loads
+chrome.webNavigation.onHistoryStateUpdated.addListener(handleNavigationChange); // pushState, replaceState, etc
 
 function shouldBlockForBucket(bucket) {
     if (bucket.alwaysBlock) return true;

@@ -1,0 +1,15 @@
+{
+  "name": "open-tab-blocker",
+  "version": "1.0.0",
+  "main": "background.js",
+  "scripts": {
+    "build": "web-ext build --overwrite-dest"
+  },
+  "keywords": [],
+  "author": "Andrew Stilliard",
+  "license": "MIT",
+  "description": "Open Tab Blocker - Chrome Extension",
+  "devDependencies": {
+    "web-ext": "^8.3.0"
+  }
+}

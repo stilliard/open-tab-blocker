@@ -4,6 +4,8 @@
 
 Open Tab Blocker is a Chrome extension designed to help you manage your browsing habits by grouping tabs into buckets and restricting access to certain sites based on predefined rules. This extension helps improve your productivity by limiting distractions and promoting focused browsing.
 
+Initially developed as a test using GitHub Copilot, the extension is fully functional, open source and available for download on the Chrome Web Store.
+
 ## Features
 
 - Group tabs into customizable buckets.
@@ -38,6 +40,18 @@ Open Tab Blocker is a Chrome extension designed to help you manage your browsing
 ## Contributing
 
 Contributions are welcome! Please fork the repository and submit a pull request for any improvements or bug fixes.
+
+### Building the extension for Chrome Web Store
+
+1. Install dependencies:
+    ```bash
+    npm install
+    ```
+2. Build the extension:
+    ```bash
+    npm run build
+    ```
+3. The built extension zip file will be located in the `web-ext-artifacts` folder which you can then upload to the Chrome Web Store.
 
 ## License
 

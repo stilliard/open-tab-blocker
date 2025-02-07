@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Site Focus Blocker",
+  "name": "Open Tab Blocker",
   "version": "1.0",
   "description": "Block distracting websites during specific time periods",
   "permissions": [

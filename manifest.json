@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Open Tab Blocker",
   "version": "1.0",
-  "description": "Block distracting websites during specific time periods",
+  "description": "Block distracting websites by organizing them into time-controlled buckets",
   "permissions": [
     "storage",
     "webNavigation",

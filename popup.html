@@ -1,151 +1,56 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Open Tab Blocker</title>
-  <style>
-    body {
-      width: 350px;
-      padding: 10px;
-      font-family: Arial, sans-serif;
-    }
-    .site-list {
-      max-height: 300px;
-      overflow-y: auto;
-      margin-top: 20px;
-    }
-    .site-item {
-      margin-bottom: 10px;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    .site-item button {
-      margin-left: 5px;
-      padding: 3px 8px;
-      border-radius: 3px;
-      border: 1px solid #ccc;
-      background: #f8f8f8;
-      cursor: pointer;
-    }
-    .site-item button:hover {
-      background: #e8e8e8;
-    }
-    .toggle-switch {
-      position: relative;
-      display: inline-block;
-      width: 60px;
-      height: 34px;
-    }
-    .toggle-switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: #ccc;
-      transition: .4s;
-      border-radius: 34px;
-    }
-    .slider:before {
-      position: absolute;
-      content: "";
-      height: 26px;
-      width: 26px;
-      left: 4px;
-      bottom: 4px;
-      background-color: white;
-      transition: .4s;
-      border-radius: 50%;
-    }
-    input:checked + .slider {
-      background-color: #2196F3;
-    }
-    input:checked + .slider:before {
-      transform: translateX(26px);
-    }
-    .form-section {
-      background: #f5f5f5;
-      padding: 15px;
-      border-radius: 5px;
-      margin: 10px 0;
-    }
-    .form-group {
-      margin-bottom: 10px;
-    }
-    .form-group label {
-      display: block;
-      margin-bottom: 5px;
-    }
-    .form-group input[type="text"] {
-      width: 100%;
-      padding: 5px;
-      border: 1px solid #ccc;
-      border-radius: 3px;
-    }
-    .form-group input[type="time"] {
-      padding: 5px;
-      border: 1px solid #ccc;
-      border-radius: 3px;
-    }
-    button#addSite {
-      width: 100%;
-      padding: 8px;
-      background-color: #2196F3;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    button#addSite:hover {
-      background-color: #1976D2;
-    }
-  </style>
+    <title>Open Tab Blocker</title>
+    <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <h2>Open Tab Blocker</h2>
-  
-  <div class="form-group">
-    <label class="toggle-switch">
-      <input type="checkbox" id="extensionEnabled">
-      <span class="slider"></span>
-    </label>
-    <span>Extension Enabled</span>
-  </div>
 
-  <div class="form-section">
-    <h3 id="addSiteTitle">Add Site</h3>
-    <div class="form-group">
-      <label for="newSite">Website URL:</label>
-      <input type="text" id="newSite" placeholder="Enter website (e.g., youtube.com)">
-    </div>
-    
-    <div class="form-group">
-      <label>
-        <input type="checkbox" id="alwaysBlock"> Always Block
-      </label>
-    </div>
-    
-    <div class="form-group" id="timeSettings">
-      <label>Blocking Period:</label>
-      <div>
-        <input type="time" id="startTime"> to 
-        <input type="time" id="endTime">
-      </div>
-    </div>
-    
-    <button id="addSite">Add Site</button>
-  </div>
+    <header>
+        <div class="tabs">
+            <div class="tab active" data-tab="manage">Buckets</div>
+            <div class="tab" data-tab="add">+</div>
+        </div>
 
-  <div class="site-list" id="siteList">
-    <!-- Sites will be inserted here dynamically -->
-  </div>
+        <img src="icons/logo.png" alt="Open Tab Blocker">
+    </header>
 
-  <script src="popup.js"></script>
+    <div id="manageView" class="tab-section">
+        <div id="bucketList" class="bucket-list">
+            <!-- Buckets will be inserted here dynamically -->
+        </div>
+    </div>
+
+    <div id="addForm" class="tab-section form-section" style="display: none;">
+        <div id="bucketForm">
+            <h3 id="formTitle">Add New Bucket</h3>
+            <div class="form-group">
+                <label for="bucketName">Bucket Name:</label>
+                <input type="text" id="bucketName" placeholder="e.g., Social Media, Gaming, etc.">
+            </div>
+
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="alwaysBlock">
+                    Always Block
+                </label>
+            </div>
+
+            <div id="timeSettings" class="form-group">
+                <label>Blocking Period:</label>
+                <div>
+                    <input type="time" id="startTime"> to
+                    <input type="time" id="endTime">
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button id="saveBucket" class="primary">Create Bucket</button>
+                <button id="cancelEdit" class="secondary" style="display: none;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
 </body>
 </html>

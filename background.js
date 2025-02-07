@@ -1,40 +1,45 @@
 chrome.webNavigation.onBeforeNavigate.addListener((details) => {
-  if (details.frameId !== 0) return; // Only block main frame navigation
+    if (details.frameId !== 0) return; // Only block main frame navigation
 
-  chrome.storage.sync.get(['enabled', 'sites'], (result) => {
-    if (result.enabled === false) return;
+    chrome.storage.sync.get(['buckets'], (result) => {
+        const buckets = result.buckets || [];
+        const url = new URL(details.url);
 
-    const sites = result.sites || [];
-    const url = new URL(details.url);
-    const matchingSite = sites.find(site => 
-      url.hostname.includes(site.url) || site.url.includes(url.hostname)
-    );
+        // Check each enabled bucket
+        for (const bucket of buckets) {
+            if (!bucket.enabled) continue;
 
-    if (matchingSite) {
-      if (shouldBlock(matchingSite)) {
-        chrome.tabs.update(details.tabId, {
-          url: chrome.runtime.getURL('blocked.html')
-        });
-      }
-    }
-  });
+            // Check if the URL matches any site in this bucket
+            const matchingSite = bucket.sites.find(site =>
+                // url.hostname.includes(site.url) || site.url.includes(url.hostname) // the problem with this was if you had x.com blocked it'd also block abcx.com, we only want to block x.com and any subdomains
+                url.hostname === site.url || url.hostname.endsWith('.' + site.url) // this is the fix
+            );
+
+            if (matchingSite && shouldBlockForBucket(bucket)) {
+                chrome.tabs.update(details.tabId, {
+                    url: chrome.runtime.getURL('blocked.html')
+                });
+                return;
+            }
+        }
+    });
 });
 
-function shouldBlock(site) {
-  if (site.alwaysBlock) return true;
+function shouldBlockForBucket(bucket) {
+    if (bucket.alwaysBlock) return true;
 
-  const now = new Date();
-  const currentTime = now.getHours().toString().padStart(2, '0') + ':' + 
-                     now.getMinutes().toString().padStart(2, '0');
-  
-  const startTime = site.startTime;
-  const endTime = site.endTime;
+    const now = new Date();
+    const currentTime = now.getHours().toString().padStart(2, '0') + ':' +
+        now.getMinutes().toString().padStart(2, '0');
 
-  // Handle time comparison
-  if (startTime <= endTime) {
-    return currentTime >= startTime && currentTime <= endTime;
-  } else {
-    // Handle cases where block period crosses midnight
-    return currentTime >= startTime || currentTime <= endTime;
-  }
+    const startTime = bucket.startTime;
+    const endTime = bucket.endTime;
+
+    // Handle time comparison
+    if (startTime <= endTime) {
+        return currentTime >= startTime && currentTime <= endTime;
+    } else {
+        // Handle cases where block period crosses midnight
+        return currentTime >= startTime || currentTime <= endTime;
+    }
 }

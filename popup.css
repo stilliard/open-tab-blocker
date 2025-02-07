@@ -1,0 +1,259 @@
+body {
+    width: 400px;
+    padding: 10px;
+    font-family: Arial, sans-serif;
+}
+
+.tab-section {
+    max-height: 400px;
+    overflow-y: scroll;
+    margin-top: 20px;
+    clear: both;
+}
+
+.bucket-item {
+    margin-bottom: 15px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background-color: #f8f8f8;
+}
+
+.site-item {
+    margin: 5px 0;
+    padding: 8px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    background-color: white;
+}
+
+.bucket-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    vertical-align: middle;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked+.slider {
+    background-color: #2196F3;
+}
+
+input:checked+.slider:before {
+    transform: translateX(20px);
+}
+
+.form-section {
+    border: 1px solid #ddd;
+    background-color: #f8f8f8;
+    padding: 15px;
+    border-radius: 5px;
+    margin: 10px 0;
+}
+
+.form-group {
+    margin-bottom: 10px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.form-group input[type="text"],
+.form-group select {
+    width: 100%;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+.form-group input[type="time"] {
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+.tabs {
+    float: right;
+    display: flex;
+    margin-bottom: 15px;
+}
+
+.tab {
+    padding: 8px 15px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    background: #f8f8f8;
+}
+
+.tab.active {
+    background: #2196F3;
+    color: white;
+    border-color: #2196F3;
+}
+
+.tab:first-child {
+    border-radius: 4px 0 0 4px;
+}
+
+.tab:last-child {
+    border-radius: 0 4px 4px 0;
+}
+
+button {
+    padding: 5px 10px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #f0f0f0;
+}
+
+button.primary {
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    width: 100%;
+}
+
+button.primary:hover {
+    background-color: #1976D2;
+}
+
+.bucket-sites {
+    margin-left: 15px;
+}
+
+.time-settings {
+    font-size: 0.9em;
+    color: #666;
+    margin: 5px 0;
+}
+
+.site-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.delete-site-btn {
+    padding: 2px 6px;
+    font-size: 12px;
+    color: #666;
+    background: none;
+    border: none;
+}
+
+.delete-site-btn:hover {
+    color: #d32f2f;
+    background: rgba(211, 47, 47, 0.1);
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+}
+
+.button-group button {
+    flex: 1;
+}
+
+button.secondary {
+    background-color: #f1f1f1;
+    color: #333;
+    border: 1px solid #ccc;
+}
+
+button.secondary:hover {
+    background-color: #e4e4e4;
+}
+
+.add-site-form {
+    display: flex;
+    gap: 8px;
+    margin: 10px 0;
+    padding: 8px;
+    background: #fff;
+    border-radius: 4px;
+}
+
+.add-site-form input {
+    flex: 1;
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+.add-site-form button {
+    white-space: nowrap;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+}
+
+.bucket-header h3 {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.bucket-timing {
+    font-size: 0.9em;
+    color: #666;
+    margin: 5px 0;
+}
+
+.bucket-timing.always {
+    color: #d32f2f;
+}

@@ -11,7 +11,9 @@ Initially developed as a test using GitHub Copilot, the extension is fully funct
 - Group tabs into customizable buckets.
 - Set rules to restrict access to specific sites during certain times.
 - Block access to restricted sites altogether.
-- Easily switch between different tab buckets.
+- Easily switch between on/off tab buckets.
+
+![Open Tab Blocker Screenshot Example](icons/small-promo-tile.png)
 
 ## Installation
 

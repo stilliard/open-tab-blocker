@@ -71,10 +71,16 @@ function renderBuckets() {
     const bucketList = document.getElementById('bucketList');
     bucketList.innerHTML = '';
 
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
     buckets.forEach((bucket, bucketIndex) => {
         const bucketElement = document.createElement('div');
         bucketElement.className = 'bucket-item';
         bucketElement.dataset.bucketIndex = bucketIndex;
+
+        const daysText = bucket.days && bucket.days.length > 0
+            ? `on ${bucket.days.map(d => dayNames[d]).join(', ')}`
+            : 'every day';
 
         bucketElement.innerHTML = `
       <div class="bucket-header">
@@ -89,7 +95,7 @@ function renderBuckets() {
         </div>
       </div>
       <div class="bucket-timing ${bucket.alwaysBlock ? 'always' : ''}">
-        ${bucket.alwaysBlock ? 'Always Blocked' : `Blocked from ${bucket.startTime} to ${bucket.endTime}`}
+        ${bucket.alwaysBlock ? 'Always Blocked' : `Blocked from ${bucket.startTime} to ${bucket.endTime} ${daysText}`}
       </div>
       <div class="bucket-sites">
         ${bucket.sites.map((site, siteIndex) => `
@@ -114,6 +120,8 @@ function handleBucketSubmit() {
     const alwaysBlock = document.getElementById('alwaysBlock').checked;
     const startTime = document.getElementById('startTime').value;
     const endTime = document.getElementById('endTime').value;
+    const selectedDays = Array.from(document.querySelectorAll('.day-checkbox:checked'))
+        .map(checkbox => parseInt(checkbox.value));
 
     if (!name) {
         alert('Please enter a bucket name');
@@ -131,7 +139,8 @@ function handleBucketSubmit() {
         startTime: alwaysBlock ? null : startTime,
         endTime: alwaysBlock ? null : endTime,
         enabled: true,
-        sites: []
+        sites: [],
+        days: selectedDays
     };
 
     if (editingBucketIndex !== null) {
@@ -161,6 +170,11 @@ function editBucket(index) {
     if (!bucket.alwaysBlock) {
         document.getElementById('startTime').value = bucket.startTime;
         document.getElementById('endTime').value = bucket.endTime;
+
+        // Set day checkboxes
+        document.querySelectorAll('.day-checkbox').forEach(checkbox => {
+            checkbox.checked = bucket.days ? bucket.days.includes(parseInt(checkbox.value)) : false;
+        });
     }
 
     document.getElementById('formTitle').textContent = 'Edit Bucket';
@@ -213,6 +227,12 @@ function clearBucketForm() {
     document.getElementById('startTime').value = '';
     document.getElementById('endTime').value = '';
     document.getElementById('timeSettings').style.display = 'block';
+
+    // Clear day selections
+    document.querySelectorAll('.day-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+
     document.getElementById('formTitle').textContent = 'Add New Bucket';
     document.getElementById('saveBucket').textContent = 'Create Bucket';
     document.getElementById('cancelEdit').style.display = 'none';

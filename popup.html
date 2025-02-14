@@ -37,10 +37,18 @@
             </div>
 
             <div id="timeSettings" class="form-group">
-                <label>Blocking Period:</label>
-                <div>
-                    <input type="time" id="startTime"> to
-                    <input type="time" id="endTime">
+                <label>Blocking Periods:</label>
+                <div class="time-period">
+                    <div class="time-period-inputs">
+                        <input type="time" id="startTime"> to
+                        <input type="time" id="endTime">
+                        <span class="time-control-icon add-time" title="Add second time period">+</span>
+                    </div>
+                    <div class="time-period-inputs second-period" style="display: none;">
+                        <input type="time" id="startTime2"> to
+                        <input type="time" id="endTime2">
+                        <span class="time-control-icon remove-time" title="Remove second time period">&#128473;</span>
+                    </div>
                 </div>
                 <div id="daysSelection">
                     <label><input type="checkbox" class="day-checkbox" value="0"> Sun</label>

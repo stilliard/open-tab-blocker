@@ -75,16 +75,35 @@ function shouldBlockForBucket(bucket) {
     // Convert current time to minutes since midnight
     const currentTime = now.getHours() * 60 + now.getMinutes();
 
-    // Convert bucket times to minutes since midnight
-    const startTimeMinutes = timeToMinutes(bucket.startTime);
-    const endTimeMinutes = timeToMinutes(bucket.endTime);
+    // Check first time period
+    if (bucket.startTime && bucket.endTime) {
+        const startTimeMinutes = timeToMinutes(bucket.startTime);
+        const endTimeMinutes = timeToMinutes(bucket.endTime);
 
-    // Check if current time falls within blocking period
-    if (endTimeMinutes >= startTimeMinutes) {
+        if (isTimeInRange(currentTime, startTimeMinutes, endTimeMinutes)) {
+            return true;
+        }
+    }
+
+    // Check second time period if it exists
+    if (bucket.startTime2 && bucket.endTime2) {
+        const startTime2Minutes = timeToMinutes(bucket.startTime2);
+        const endTime2Minutes = timeToMinutes(bucket.endTime2);
+
+        if (isTimeInRange(currentTime, startTime2Minutes, endTime2Minutes)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function isTimeInRange(currentTime, startTime, endTime) {
+    if (endTime >= startTime) {
         // Normal time range (e.g., 9:00 to 17:00)
-        return currentTime >= startTimeMinutes && currentTime <= endTimeMinutes;
+        return currentTime >= startTime && currentTime <= endTime;
     } else {
         // Overnight time range (e.g., 22:00 to 06:00)
-        return currentTime >= startTimeMinutes || currentTime <= endTimeMinutes;
+        return currentTime >= startTime || currentTime <= endTime;
     }
 }

@@ -16,6 +16,12 @@ function setupEventListeners() {
     document.getElementById('saveBucket').addEventListener('click', handleBucketSubmit);
     document.getElementById('cancelEdit').addEventListener('click', cancelEdit);
 
+    document.getElementById('alwaysBlock').addEventListener('change', toggleTimeSettings);
+
+    // Time period control icons
+    document.querySelector('.add-time').addEventListener('click', showSecondPeriod);
+    document.querySelector('.remove-time').addEventListener('click', hideSecondPeriod);
+
     // Bucket list event delegation
     document.getElementById('bucketList').addEventListener('click', (e) => {
         const target = e.target;
@@ -43,14 +49,39 @@ function setupEventListeners() {
             toggleBucket(bucketIndex, target.checked);
         }
     });
-
-    document.getElementById('alwaysBlock').addEventListener('change', toggleTimeSettings);
 }
 
 function toggleTimeSettings() {
     const timeSettings = document.getElementById('timeSettings');
     const alwaysBlock = document.getElementById('alwaysBlock').checked;
     timeSettings.style.display = alwaysBlock ? 'none' : 'block';
+}
+
+function toggleSecondPeriod() {
+    const secondPeriod = document.querySelector('.second-period');
+    const button = document.getElementById('toggleSecondPeriod');
+    if (secondPeriod.style.display === 'none') {
+        secondPeriod.style.display = 'flex';
+        button.textContent = 'Remove Second Period';
+    } else {
+        secondPeriod.style.display = 'none';
+        button.textContent = 'Add Second Period';
+        document.getElementById('startTime2').value = '';
+        document.getElementById('endTime2').value = '';
+    }
+}
+
+function showSecondPeriod() {
+    document.querySelector('.second-period').style.display = 'flex';
+    document.querySelector('.add-time').style.display = 'none';
+}
+
+function hideSecondPeriod() {
+    const secondPeriod = document.querySelector('.second-period');
+    secondPeriod.style.display = 'none';
+    document.getElementById('startTime2').value = '';
+    document.getElementById('endTime2').value = '';
+    document.querySelector('.add-time').style.display = 'inline-flex';
 }
 
 function switchTab(tabName) {
@@ -82,6 +113,15 @@ function renderBuckets() {
             ? `on ${bucket.days.map(d => dayNames[d]).join(', ')}`
             : 'every day';
 
+        let timingText = 'Always Blocked';
+        if (!bucket.alwaysBlock) {
+            timingText = `Blocked from ${bucket.startTime} to ${bucket.endTime}`;
+            if (bucket.startTime2 && bucket.endTime2) {
+                timingText += ` and ${bucket.startTime2} to ${bucket.endTime2}`;
+            }
+            timingText += ` ${daysText}`;
+        }
+
         bucketElement.innerHTML = `
       <div class="bucket-header">
         <h3>${bucket.name}</h3>
@@ -95,7 +135,7 @@ function renderBuckets() {
         </div>
       </div>
       <div class="bucket-timing ${bucket.alwaysBlock ? 'always' : ''}">
-        ${bucket.alwaysBlock ? 'Always Blocked' : `Blocked from ${bucket.startTime} to ${bucket.endTime} ${daysText}`}
+        ${timingText}
       </div>
       <div class="bucket-sites">
         ${bucket.sites.map((site, siteIndex) => `
@@ -120,6 +160,8 @@ function handleBucketSubmit() {
     const alwaysBlock = document.getElementById('alwaysBlock').checked;
     const startTime = document.getElementById('startTime').value;
     const endTime = document.getElementById('endTime').value;
+    const startTime2 = document.getElementById('startTime2').value;
+    const endTime2 = document.getElementById('endTime2').value;
     const selectedDays = Array.from(document.querySelectorAll('.day-checkbox:checked'))
         .map(checkbox => parseInt(checkbox.value));
 
@@ -128,8 +170,14 @@ function handleBucketSubmit() {
         return;
     }
 
-    if (!alwaysBlock && (!startTime || !endTime)) {
-        alert('Please set both start and end times');
+    if (!alwaysBlock && !startTime && !endTime && !startTime2 && !endTime2) {
+        alert('Please set at least one time period');
+        return;
+    }
+
+    if (!alwaysBlock && ((startTime && !endTime) || (!startTime && endTime) ||
+        (startTime2 && !endTime2) || (!startTime2 && endTime2))) {
+        alert('Please set both start and end times for each time period');
         return;
     }
 
@@ -138,6 +186,8 @@ function handleBucketSubmit() {
         alwaysBlock,
         startTime: alwaysBlock ? null : startTime,
         endTime: alwaysBlock ? null : endTime,
+        startTime2: alwaysBlock ? null : startTime2,
+        endTime2: alwaysBlock ? null : endTime2,
         enabled: true,
         sites: [],
         days: selectedDays
@@ -168,8 +218,20 @@ function editBucket(index) {
     timeSettings.style.display = bucket.alwaysBlock ? 'none' : 'block';
 
     if (!bucket.alwaysBlock) {
-        document.getElementById('startTime').value = bucket.startTime;
-        document.getElementById('endTime').value = bucket.endTime;
+        document.getElementById('startTime').value = bucket.startTime || '';
+        document.getElementById('endTime').value = bucket.endTime || '';
+        document.getElementById('startTime2').value = bucket.startTime2 || '';
+        document.getElementById('endTime2').value = bucket.endTime2 || '';
+
+        const secondPeriod = document.querySelector('.second-period');
+        const addTimeIcon = document.querySelector('.add-time');
+        if (bucket.startTime2 || bucket.endTime2) {
+            secondPeriod.style.display = 'flex';
+            addTimeIcon.style.display = 'none';
+        } else {
+            secondPeriod.style.display = 'none';
+            addTimeIcon.style.display = 'inline-flex';
+        }
 
         // Set day checkboxes
         document.querySelectorAll('.day-checkbox').forEach(checkbox => {
@@ -226,7 +288,11 @@ function clearBucketForm() {
     document.getElementById('alwaysBlock').checked = false;
     document.getElementById('startTime').value = '';
     document.getElementById('endTime').value = '';
+    document.getElementById('startTime2').value = '';
+    document.getElementById('endTime2').value = '';
     document.getElementById('timeSettings').style.display = 'block';
+    document.querySelector('.second-period').style.display = 'none';
+    document.querySelector('.add-time').style.display = 'inline-flex';
 
     // Clear day selections
     document.querySelectorAll('.day-checkbox').forEach(checkbox => {

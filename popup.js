@@ -3,9 +3,12 @@ let editingBucketIndex = null;
 let frictionMode = false;
 let recordUnlocks = false;
 let trackBlockCounts = false;
+let focusSessions = false;
 let blockCounts = {};
 let unlockLog = [];
 let pendingFrictionCallback = null;
+let focusSession = null;
+let focusCountdownInterval = null;
 
 const frictionSentences = [
     "I am choosing to procrastinate right now",
@@ -27,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSettings();
     loadUnlockLog();
     loadBlockCounts();
+    loadFocusSession();
     setupEventListeners();
 });
 
@@ -76,6 +80,16 @@ function setupEventListeners() {
         renderSettings();
     });
 
+    // Focus Sessions toggle
+    document.getElementById('focusSessionsToggle').addEventListener('change', (e) => {
+        focusSessions = e.target.checked;
+        if (!focusSessions && focusSession) {
+            endFocusSession();
+        }
+        saveSettings();
+        renderSettings();
+    });
+
     // Clear history button
     document.getElementById('clearHistory').addEventListener('click', () => {
         unlockLog = [];
@@ -104,6 +118,16 @@ function setupEventListeners() {
         frictionInput.classList.toggle('match', matches);
         frictionInput.classList.toggle('no-match', !matches && frictionInput.value.length > 0);
     });
+
+    // Focus session preset buttons
+    document.querySelectorAll('.focus-preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            startFocusSession(parseInt(btn.dataset.minutes));
+        });
+    });
+
+    // Focus session end early button
+    document.getElementById('focusEndEarly').addEventListener('click', endFocusSession);
 
     // Bucket list event delegation
     document.getElementById('bucketList').addEventListener('click', (e) => {
@@ -459,24 +483,27 @@ function loadBuckets() {
 }
 
 function loadSettings() {
-    chrome.storage.sync.get(['frictionMode', 'recordUnlocks', 'trackBlockCounts'], (result) => {
+    chrome.storage.sync.get(['frictionMode', 'recordUnlocks', 'trackBlockCounts', 'focusSessions'], (result) => {
         frictionMode = result.frictionMode || false;
         recordUnlocks = result.recordUnlocks || false;
         trackBlockCounts = result.trackBlockCounts || false;
+        focusSessions = result.focusSessions || false;
         renderSettings();
     });
 }
 
 function saveSettings() {
-    chrome.storage.sync.set({ frictionMode, recordUnlocks, trackBlockCounts });
+    chrome.storage.sync.set({ frictionMode, recordUnlocks, trackBlockCounts, focusSessions });
 }
 
 function renderSettings() {
     document.getElementById('frictionModeToggle').checked = frictionMode;
     document.getElementById('recordUnlocksToggle').checked = recordUnlocks;
     document.getElementById('trackBlockCountsToggle').checked = trackBlockCounts;
+    document.getElementById('focusSessionsToggle').checked = focusSessions;
     document.getElementById('historyTab').style.display =
         (recordUnlocks || trackBlockCounts) ? 'flex' : 'none';
+    document.getElementById('focusBar').style.display = focusSessions ? 'block' : 'none';
 }
 
 function showFrictionChallenge(callback) {
@@ -614,6 +641,94 @@ function renderHistory() {
     }
 
     container.innerHTML = html;
+}
+
+function loadFocusSession() {
+    chrome.storage.sync.get(['focusSession'], (result) => {
+        focusSession = result.focusSession || null;
+        if (focusSession && Date.now() >= focusSession.endTime) {
+            // Session expired while popup was closed — clean up
+            focusSession = null;
+            chrome.storage.sync.set({ focusSession: null });
+        }
+        renderFocusBar();
+    });
+}
+
+function startFocusSession(minutes) {
+    const endTime = Date.now() + minutes * 60 * 1000;
+    const previousStates = {};
+
+    for (const bucket of buckets) {
+        previousStates[bucket.name] = bucket.enabled;
+        bucket.enabled = true;
+    }
+
+    focusSession = { endTime, previousStates };
+
+    chrome.storage.sync.set({ focusSession, buckets }, () => {
+        chrome.alarms.create('focusSessionEnd', { when: endTime });
+        renderBuckets();
+        renderFocusBar();
+    });
+}
+
+function endFocusSession() {
+    if (!focusSession) return;
+
+    for (const bucket of buckets) {
+        if (bucket.name in focusSession.previousStates) {
+            bucket.enabled = focusSession.previousStates[bucket.name];
+        }
+    }
+
+    focusSession = null;
+
+    chrome.alarms.clear('focusSessionEnd');
+    chrome.storage.sync.set({ focusSession: null, buckets }, () => {
+        renderBuckets();
+        renderFocusBar();
+    });
+}
+
+function renderFocusBar() {
+    const idleEl = document.getElementById('focusIdle');
+    const activeEl = document.getElementById('focusActive');
+
+    if (focusCountdownInterval) {
+        clearInterval(focusCountdownInterval);
+        focusCountdownInterval = null;
+    }
+
+    if (!focusSession) {
+        idleEl.style.display = 'flex';
+        activeEl.style.display = 'none';
+        return;
+    }
+
+    idleEl.style.display = 'none';
+    activeEl.style.display = 'flex';
+
+    function updateCountdown() {
+        const remaining = focusSession.endTime - Date.now();
+        if (remaining <= 0) {
+            clearInterval(focusCountdownInterval);
+            focusCountdownInterval = null;
+            focusSession = null;
+            chrome.storage.sync.set({ focusSession: null });
+            loadBuckets();
+            renderFocusBar();
+            return;
+        }
+        const totalSeconds = Math.ceil(remaining / 1000);
+        const m = Math.floor(totalSeconds / 60);
+        const s = totalSeconds % 60;
+        document.getElementById('focusCountdown').textContent =
+            String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    }
+
+    updateCountdown();
+    focusCountdownInterval = setInterval(updateCountdown, 1000);
 }
 
 function formatDuration(ms) {

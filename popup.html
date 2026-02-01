@@ -40,6 +40,22 @@
     </header>
 
     <div id="manageView" class="tab-section">
+        <div id="focusBar" class="focus-bar" style="display: none;">
+            <div id="focusIdle" class="focus-idle">
+                <span class="focus-label">Focus</span>
+                <div class="focus-presets">
+                    <button class="focus-preset-btn" data-minutes="15">15m</button>
+                    <button class="focus-preset-btn" data-minutes="25">25m</button>
+                    <button class="focus-preset-btn" data-minutes="45">45m</button>
+                    <button class="focus-preset-btn" data-minutes="60">60m</button>
+                </div>
+            </div>
+            <div id="focusActive" class="focus-active" style="display: none;">
+                <span class="focus-label">Focus</span>
+                <span id="focusCountdown" class="focus-countdown">00:00</span>
+                <button id="focusEndEarly" class="focus-end-btn">End Early</button>
+            </div>
+        </div>
         <div id="bucketList" class="bucket-list">
             <!-- Buckets will be inserted here dynamically -->
         </div>
@@ -64,6 +80,16 @@
                 </div>
                 <label class="toggle-switch">
                     <input type="checkbox" id="recordUnlocksToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-item" style="margin-top: 10px;">
+                <div class="setting-info">
+                    <h3>Focus Sessions</h3>
+                    <p class="setting-description">Show a Pomodoro-style focus timer at the top of the Manage tab. Starts a timed session that enables all buckets until the timer expires.</p>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="focusSessionsToggle">
                     <span class="slider"></span>
                 </label>
             </div>

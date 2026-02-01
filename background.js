@@ -5,8 +5,9 @@
 function handleNavigationChange(details) {
     if (details.frameId !== 0) return; // Only block main frame navigation
 
-    chrome.storage.sync.get(['buckets'], (result) => {
+    chrome.storage.sync.get(['buckets', 'focusSession'], (result) => {
         const buckets = result.buckets || [];
+        const focusActive = result.focusSession && Date.now() < result.focusSession.endTime;
         const url = new URL(details.url);
 
         // Check each enabled bucket
@@ -16,7 +17,7 @@ function handleNavigationChange(details) {
             // Check if the URL matches any site in this bucket
             const matchingSite = bucket.sites.find(site => urlMatchesSite(url, site));
 
-            if (matchingSite && shouldBlockForBucket(bucket)) {
+            if (matchingSite && (focusActive || shouldBlockForBucket(bucket))) {
                 const blockedUrl = chrome.runtime.getURL('blocked.html') +
                     '?bucket=' + encodeURIComponent(bucket.name);
                 incrementBlockCount(bucket.name, () => {
@@ -109,6 +110,24 @@ function isTimeInRange(currentTime, startTime, endTime) {
         return currentTime >= startTime || currentTime <= endTime;
     }
 }
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name !== 'focusSessionEnd') return;
+
+    chrome.storage.sync.get(['focusSession', 'buckets'], (result) => {
+        const session = result.focusSession;
+        if (!session) return;
+
+        const buckets = result.buckets || [];
+        for (const bucket of buckets) {
+            if (bucket.name in session.previousStates) {
+                bucket.enabled = session.previousStates[bucket.name];
+            }
+        }
+
+        chrome.storage.sync.set({ buckets, focusSession: null });
+    });
+});
 
 function incrementBlockCount(bucketName, callback) {
     chrome.storage.sync.get(['trackBlockCounts', 'blockCounts'], (result) => {

@@ -293,6 +293,8 @@ function handleBucketSubmit() {
         return;
     }
 
+    const blockMessage = document.getElementById('blockMessage').value.trim();
+
     const bucketData = {
         name,
         alwaysBlock,
@@ -302,7 +304,8 @@ function handleBucketSubmit() {
         endTime2: alwaysBlock ? null : endTime2,
         enabled: true,
         sites: [],
-        days: selectedDays
+        days: selectedDays,
+        blockMessage
     };
 
     if (editingBucketIndex !== null) {
@@ -350,6 +353,8 @@ function editBucket(index) {
             checkbox.checked = bucket.days ? bucket.days.includes(parseInt(checkbox.value)) : false;
         });
     }
+
+    document.getElementById('blockMessage').value = bucket.blockMessage || '';
 
     document.getElementById('formTitle').textContent = 'Edit Bucket';
     document.getElementById('saveBucket').textContent = 'Update Bucket';
@@ -455,6 +460,8 @@ function clearBucketForm() {
     document.getElementById('timeSettings').style.display = 'block';
     document.querySelector('.second-period').style.display = 'none';
     document.querySelector('.add-time').style.display = 'inline-flex';
+
+    document.getElementById('blockMessage').value = '';
 
     // Clear day selections
     document.querySelectorAll('.day-checkbox').forEach(checkbox => {

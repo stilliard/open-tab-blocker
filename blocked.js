@@ -1,4 +1,14 @@
-chrome.storage.sync.get(['trackBlockCounts', 'blockCounts'], (result) => {
+const params = new URLSearchParams(window.location.search);
+const triggeredBucket = params.get('bucket');
+
+chrome.storage.sync.get(['trackBlockCounts', 'blockCounts', 'buckets'], (result) => {
+    // Apply custom block message if the bucket has one
+    const buckets = result.buckets || [];
+    const bucket = buckets.find(b => b.name === triggeredBucket);
+    if (bucket && bucket.blockMessage) {
+        document.getElementById('blockHeading').textContent = bucket.blockMessage;
+    }
+
     if (!result.trackBlockCounts) return;
 
     const blockCounts = result.blockCounts || {};
@@ -6,17 +16,14 @@ chrome.storage.sync.get(['trackBlockCounts', 'blockCounts'], (result) => {
     const todayCounts = blockCounts[today];
     if (!todayCounts || Object.keys(todayCounts).length === 0) return;
 
-    const params = new URLSearchParams(window.location.search);
-    const triggeredBucket = params.get('bucket');
-
     const sorted = Object.entries(todayCounts).sort((a, b) => b[1] - a[1]);
     const total = sorted.reduce((sum, [, count]) => sum + count, 0);
 
     let html = `<h2>Today's Blocks</h2>`;
-    for (const [bucket, count] of sorted) {
-        const highlight = bucket === triggeredBucket ? ' highlight' : '';
+    for (const [bucketName, count] of sorted) {
+        const highlight = bucketName === triggeredBucket ? ' highlight' : '';
         html += `<div class="block-count-row${highlight}">
-            <span class="block-count-name">${bucket}</span>
+            <span class="block-count-name">${bucketName}</span>
             <span class="block-count-badge">${count}</span>
         </div>`;
     }

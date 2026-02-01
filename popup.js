@@ -359,8 +359,15 @@ function deleteBucket(index) {
 }
 
 function deleteSite(bucketIndex, siteIndex) {
-    buckets[bucketIndex].sites.splice(siteIndex, 1);
-    saveBuckets();
+    if (frictionMode) {
+        showFrictionChallenge(() => {
+            buckets[bucketIndex].sites.splice(siteIndex, 1);
+            saveBuckets();
+        });
+    } else {
+        buckets[bucketIndex].sites.splice(siteIndex, 1);
+        saveBuckets();
+    }
 }
 
 function toggleBucket(index, enabled) {

@@ -1,8 +1,26 @@
 let buckets = [];
 let editingBucketIndex = null;
+let frictionMode = false;
+let pendingFrictionCallback = null;
+
+const frictionSentences = [
+    "I am choosing to procrastinate right now",
+    "I am giving up on my goals for today",
+    "This distraction is more important than my work",
+    "I would rather scroll than be productive",
+    "My future self will be disappointed in me",
+    "I am choosing instant gratification over long term success",
+    "I do not respect my own time",
+    "I am not strong enough to stay focused",
+    "I am wasting the one life I have on this",
+    "Nobody who achieves their dreams does this",
+    "I am letting down everyone who believes in me",
+    "I will regret this when the deadline hits",
+];
 
 document.addEventListener('DOMContentLoaded', () => {
     loadBuckets();
+    loadSettings();
     setupEventListeners();
 });
 
@@ -21,6 +39,44 @@ function setupEventListeners() {
     // Time period control icons
     document.querySelector('.add-time').addEventListener('click', showSecondPeriod);
     document.querySelector('.remove-time').addEventListener('click', hideSecondPeriod);
+
+    // Friction mode toggle
+    document.getElementById('frictionModeToggle').addEventListener('change', (e) => {
+        if (e.target.checked) {
+            frictionMode = true;
+            saveSettings();
+        } else {
+            // Turning OFF requires challenge
+            e.target.checked = true;
+            showFrictionChallenge(() => {
+                frictionMode = false;
+                saveSettings();
+                renderSettings();
+            });
+        }
+    });
+
+    // Friction modal buttons
+    document.getElementById('frictionCancel').addEventListener('click', hideFrictionChallenge);
+    document.getElementById('frictionConfirm').addEventListener('click', () => {
+        if (pendingFrictionCallback) {
+            pendingFrictionCallback();
+            pendingFrictionCallback = null;
+        }
+        hideFrictionChallenge();
+    });
+
+    // Friction input — prevent paste, real-time matching
+    const frictionInput = document.getElementById('frictionInput');
+    frictionInput.addEventListener('paste', (e) => e.preventDefault());
+    frictionInput.addEventListener('drop', (e) => e.preventDefault());
+    frictionInput.addEventListener('input', () => {
+        const sentence = document.getElementById('frictionSentence').textContent;
+        const matches = frictionInput.value.toLowerCase() === sentence.toLowerCase();
+        document.getElementById('frictionConfirm').disabled = !matches;
+        frictionInput.classList.toggle('match', matches);
+        frictionInput.classList.toggle('no-match', !matches && frictionInput.value.length > 0);
+    });
 
     // Bucket list event delegation
     document.getElementById('bucketList').addEventListener('click', (e) => {
@@ -89,9 +145,9 @@ function switchTab(tabName) {
         tab.classList.toggle('active', tab.dataset.tab === tabName);
     });
 
-    // Toggle visibility of both views
     document.getElementById('addForm').style.display = tabName === 'add' ? 'block' : 'none';
     document.getElementById('manageView').style.display = tabName === 'manage' ? 'block' : 'none';
+    document.getElementById('settingsView').style.display = tabName === 'settings' ? 'block' : 'none';
 
     if (tabName === 'manage' && editingBucketIndex !== null) {
         cancelEdit();
@@ -267,9 +323,16 @@ function addSiteToBucket(bucketIndex, url) {
 }
 
 function deleteBucket(index) {
-    if (confirm('Are you sure you want to delete this bucket and all its sites?')) {
-        buckets.splice(index, 1);
-        saveBuckets();
+    if (frictionMode) {
+        showFrictionChallenge(() => {
+            buckets.splice(index, 1);
+            saveBuckets();
+        });
+    } else {
+        if (confirm('Are you sure you want to delete this bucket and all its sites?')) {
+            buckets.splice(index, 1);
+            saveBuckets();
+        }
     }
 }
 
@@ -279,8 +342,17 @@ function deleteSite(bucketIndex, siteIndex) {
 }
 
 function toggleBucket(index, enabled) {
-    buckets[index].enabled = enabled;
-    saveBuckets();
+    if (frictionMode && !enabled) {
+        // Toggling OFF with friction mode — revert checkbox and show challenge
+        renderBuckets();
+        showFrictionChallenge(() => {
+            buckets[index].enabled = false;
+            saveBuckets();
+        });
+    } else {
+        buckets[index].enabled = enabled;
+        saveBuckets();
+    }
 }
 
 function clearBucketForm() {
@@ -318,4 +390,36 @@ function loadBuckets() {
         buckets = result.buckets || [];
         renderBuckets();
     });
+}
+
+function loadSettings() {
+    chrome.storage.sync.get(['frictionMode'], (result) => {
+        frictionMode = result.frictionMode || false;
+        renderSettings();
+    });
+}
+
+function saveSettings() {
+    chrome.storage.sync.set({ frictionMode });
+}
+
+function renderSettings() {
+    document.getElementById('frictionModeToggle').checked = frictionMode;
+}
+
+function showFrictionChallenge(callback) {
+    pendingFrictionCallback = callback;
+    const sentence = frictionSentences[Math.floor(Math.random() * frictionSentences.length)];
+    document.getElementById('frictionSentence').textContent = sentence;
+    document.getElementById('frictionInput').value = '';
+    document.getElementById('frictionInput').classList.remove('match', 'no-match');
+    document.getElementById('frictionConfirm').disabled = true;
+    document.getElementById('frictionModal').style.display = 'flex';
+    document.getElementById('frictionInput').focus();
+}
+
+function hideFrictionChallenge() {
+    document.getElementById('frictionModal').style.display = 'none';
+    document.getElementById('frictionInput').value = '';
+    pendingFrictionCallback = null;
 }

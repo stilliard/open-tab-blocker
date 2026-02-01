@@ -119,10 +119,17 @@ input:checked+.slider:before {
 }
 
 .tab {
-    padding: 8px 15px;
+    padding: 8px 12px;
     cursor: pointer;
     border: 1px solid #ccc;
     background: #f8f8f8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tab svg {
+    display: block;
 }
 
 .tab.active {
@@ -438,4 +445,75 @@ button.secondary:hover {
 .modal-buttons button.primary:disabled {
     background-color: #90caf9;
     cursor: not-allowed;
+}
+
+/* History View */
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 10px 10px;
+}
+
+.history-header h3 {
+    margin: 0;
+}
+
+.history-day-group {
+    margin-bottom: 16px;
+}
+
+.history-day-label {
+    font-size: 0.85em;
+    font-weight: bold;
+    color: #555;
+    padding: 4px 10px;
+    background: #eee;
+    border-radius: 4px;
+    margin-bottom: 6px;
+}
+
+.history-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.history-entry-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.history-bucket-name {
+    font-weight: bold;
+    font-size: 0.95em;
+}
+
+.history-time {
+    font-size: 0.8em;
+    color: #666;
+}
+
+.history-duration {
+    font-size: 0.8em;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #e3f2fd;
+    color: #1565c0;
+    white-space: nowrap;
+}
+
+.history-duration.still-off {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.history-empty {
+    text-align: center;
+    color: #999;
+    padding: 40px 10px;
+    font-style: italic;
 }

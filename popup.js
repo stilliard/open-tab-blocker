@@ -1,6 +1,8 @@
 let buckets = [];
 let editingBucketIndex = null;
 let frictionMode = false;
+let recordUnlocks = false;
+let unlockLog = [];
 let pendingFrictionCallback = null;
 
 const frictionSentences = [
@@ -21,6 +23,7 @@ const frictionSentences = [
 document.addEventListener('DOMContentLoaded', () => {
     loadBuckets();
     loadSettings();
+    loadUnlockLog();
     setupEventListeners();
 });
 
@@ -54,6 +57,20 @@ function setupEventListeners() {
                 renderSettings();
             });
         }
+    });
+
+    // Record Unlocks toggle
+    document.getElementById('recordUnlocksToggle').addEventListener('change', (e) => {
+        recordUnlocks = e.target.checked;
+        saveSettings();
+        renderSettings();
+    });
+
+    // Clear history button
+    document.getElementById('clearHistory').addEventListener('click', () => {
+        unlockLog = [];
+        saveUnlockLog();
+        renderHistory();
     });
 
     // Friction modal buttons
@@ -148,6 +165,11 @@ function switchTab(tabName) {
     document.getElementById('addForm').style.display = tabName === 'add' ? 'block' : 'none';
     document.getElementById('manageView').style.display = tabName === 'manage' ? 'block' : 'none';
     document.getElementById('settingsView').style.display = tabName === 'settings' ? 'block' : 'none';
+    document.getElementById('historyView').style.display = tabName === 'history' ? 'block' : 'none';
+
+    if (tabName === 'history') {
+        renderHistory();
+    }
 
     if (tabName === 'manage' && editingBucketIndex !== null) {
         cancelEdit();
@@ -348,10 +370,37 @@ function toggleBucket(index, enabled) {
         showFrictionChallenge(() => {
             buckets[index].enabled = false;
             saveBuckets();
+            if (recordUnlocks) {
+                unlockLog.push({
+                    bucketName: buckets[index].name,
+                    disabledAt: new Date().toISOString(),
+                    enabledAt: null
+                });
+                saveUnlockLog();
+            }
         });
     } else {
         buckets[index].enabled = enabled;
         saveBuckets();
+        if (recordUnlocks) {
+            if (!enabled) {
+                unlockLog.push({
+                    bucketName: buckets[index].name,
+                    disabledAt: new Date().toISOString(),
+                    enabledAt: null
+                });
+                saveUnlockLog();
+            } else {
+                // Re-enabling: find the most recent open record for this bucket
+                for (let i = unlockLog.length - 1; i >= 0; i--) {
+                    if (unlockLog[i].bucketName === buckets[index].name && unlockLog[i].enabledAt === null) {
+                        unlockLog[i].enabledAt = new Date().toISOString();
+                        saveUnlockLog();
+                        break;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -393,18 +442,21 @@ function loadBuckets() {
 }
 
 function loadSettings() {
-    chrome.storage.sync.get(['frictionMode'], (result) => {
+    chrome.storage.sync.get(['frictionMode', 'recordUnlocks'], (result) => {
         frictionMode = result.frictionMode || false;
+        recordUnlocks = result.recordUnlocks || false;
         renderSettings();
     });
 }
 
 function saveSettings() {
-    chrome.storage.sync.set({ frictionMode });
+    chrome.storage.sync.set({ frictionMode, recordUnlocks });
 }
 
 function renderSettings() {
     document.getElementById('frictionModeToggle').checked = frictionMode;
+    document.getElementById('recordUnlocksToggle').checked = recordUnlocks;
+    document.getElementById('historyTab').style.display = recordUnlocks ? 'flex' : 'none';
 }
 
 function showFrictionChallenge(callback) {
@@ -422,4 +474,83 @@ function hideFrictionChallenge() {
     document.getElementById('frictionModal').style.display = 'none';
     document.getElementById('frictionInput').value = '';
     pendingFrictionCallback = null;
+}
+
+function loadUnlockLog() {
+    chrome.storage.sync.get(['unlockLog'], (result) => {
+        unlockLog = result.unlockLog || [];
+        pruneUnlockLog();
+    });
+}
+
+function saveUnlockLog() {
+    chrome.storage.sync.set({ unlockLog });
+}
+
+function pruneUnlockLog() {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const before = unlockLog.length;
+    unlockLog = unlockLog.filter(entry => entry.disabledAt >= sevenDaysAgo);
+    if (unlockLog.length !== before) {
+        saveUnlockLog();
+    }
+}
+
+function renderHistory() {
+    const container = document.getElementById('historyEntries');
+
+    if (unlockLog.length === 0) {
+        container.innerHTML = '<div class="history-empty">No unlock history yet.</div>';
+        return;
+    }
+
+    // Group by day, most recent first
+    const sorted = [...unlockLog].sort((a, b) => b.disabledAt.localeCompare(a.disabledAt));
+    const groups = {};
+    for (const entry of sorted) {
+        const day = entry.disabledAt.slice(0, 10);
+        if (!groups[day]) groups[day] = [];
+        groups[day].push(entry);
+    }
+
+    let html = '';
+    for (const [day, entries] of Object.entries(groups)) {
+        const dateObj = new Date(day + 'T00:00:00');
+        const label = dateObj.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+        html += `<div class="history-day-group">`;
+        html += `<div class="history-day-label">${label}</div>`;
+        for (const entry of entries) {
+            const time = new Date(entry.disabledAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+            let durationHtml;
+            if (entry.enabledAt === null) {
+                durationHtml = '<span class="history-duration still-off">still off</span>';
+            } else {
+                const ms = new Date(entry.enabledAt) - new Date(entry.disabledAt);
+                durationHtml = `<span class="history-duration">${formatDuration(ms)}</span>`;
+            }
+            html += `<div class="history-entry">
+                <div class="history-entry-info">
+                    <span class="history-bucket-name">${entry.bucketName}</span>
+                    <span class="history-time">${time}</span>
+                </div>
+                ${durationHtml}
+            </div>`;
+        }
+        html += `</div>`;
+    }
+
+    container.innerHTML = html;
+}
+
+function formatDuration(ms) {
+    const seconds = Math.floor(ms / 1000);
+    if (seconds < 60) return `${seconds}s`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m`;
+    const hours = Math.floor(minutes / 60);
+    const remainMinutes = minutes % 60;
+    if (hours < 24) return remainMinutes > 0 ? `${hours}h ${remainMinutes}m` : `${hours}h`;
+    const days = Math.floor(hours / 24);
+    const remainHours = hours % 24;
+    return remainHours > 0 ? `${days}d ${remainHours}h` : `${days}d`;
 }

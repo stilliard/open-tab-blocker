@@ -17,8 +17,10 @@ function handleNavigationChange(details) {
             const matchingSite = bucket.sites.find(site => urlMatchesSite(url, site));
 
             if (matchingSite && shouldBlockForBucket(bucket)) {
-                chrome.tabs.update(details.tabId, {
-                    url: chrome.runtime.getURL('blocked.html')
+                const blockedUrl = chrome.runtime.getURL('blocked.html') +
+                    '?bucket=' + encodeURIComponent(bucket.name);
+                incrementBlockCount(bucket.name, () => {
+                    chrome.tabs.update(details.tabId, { url: blockedUrl });
                 });
                 return;
             }
@@ -106,4 +108,27 @@ function isTimeInRange(currentTime, startTime, endTime) {
         // Overnight time range (e.g., 22:00 to 06:00)
         return currentTime >= startTime || currentTime <= endTime;
     }
+}
+
+function incrementBlockCount(bucketName, callback) {
+    chrome.storage.sync.get(['trackBlockCounts', 'blockCounts'], (result) => {
+        if (!result.trackBlockCounts) {
+            callback();
+            return;
+        }
+
+        const blockCounts = result.blockCounts || {};
+        const today = new Date().toISOString().slice(0, 10);
+
+        // Prune entries older than 7 days
+        const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        for (const date of Object.keys(blockCounts)) {
+            if (date < cutoff) delete blockCounts[date];
+        }
+
+        if (!blockCounts[today]) blockCounts[today] = {};
+        blockCounts[today][bucketName] = (blockCounts[today][bucketName] || 0) + 1;
+
+        chrome.storage.sync.set({ blockCounts }, callback);
+    });
 }

@@ -30,6 +30,55 @@
             color: #666;
             line-height: 1.5;
         }
+
+        #blockCounts {
+            display: none;
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        #blockCounts h2 {
+            font-size: 1em;
+            color: #333;
+            margin: 0 0 10px 0;
+            text-align: center;
+        }
+
+        .block-count-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            border-radius: 4px;
+            margin-bottom: 4px;
+            background: #f5f5f5;
+        }
+
+        .block-count-row.highlight {
+            background: #ffebee;
+            font-weight: bold;
+        }
+
+        .block-count-name {
+            color: #333;
+        }
+
+        .block-count-badge {
+            background: #d32f2f;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.85em;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .block-total {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #666;
+        }
     </style>
 </head>
 
@@ -38,6 +87,8 @@
         <h1>Access Blocked</h1>
         <p>This site is currently blocked by Open Tab Blocker.</p>
         <p>You can temporarily disable the blocking by turning off the respective bucket in the extension.</p>
+        <div id="blockCounts"></div>
     </div>
+    <script src="blocked.js"></script>
 </body>
 </html>

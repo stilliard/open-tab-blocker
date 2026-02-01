@@ -2,6 +2,8 @@ let buckets = [];
 let editingBucketIndex = null;
 let frictionMode = false;
 let recordUnlocks = false;
+let trackBlockCounts = false;
+let blockCounts = {};
 let unlockLog = [];
 let pendingFrictionCallback = null;
 
@@ -24,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadBuckets();
     loadSettings();
     loadUnlockLog();
+    loadBlockCounts();
     setupEventListeners();
 });
 
@@ -62,6 +65,13 @@ function setupEventListeners() {
     // Record Unlocks toggle
     document.getElementById('recordUnlocksToggle').addEventListener('change', (e) => {
         recordUnlocks = e.target.checked;
+        saveSettings();
+        renderSettings();
+    });
+
+    // Track Block Counts toggle
+    document.getElementById('trackBlockCountsToggle').addEventListener('change', (e) => {
+        trackBlockCounts = e.target.checked;
         saveSettings();
         renderSettings();
     });
@@ -449,21 +459,24 @@ function loadBuckets() {
 }
 
 function loadSettings() {
-    chrome.storage.sync.get(['frictionMode', 'recordUnlocks'], (result) => {
+    chrome.storage.sync.get(['frictionMode', 'recordUnlocks', 'trackBlockCounts'], (result) => {
         frictionMode = result.frictionMode || false;
         recordUnlocks = result.recordUnlocks || false;
+        trackBlockCounts = result.trackBlockCounts || false;
         renderSettings();
     });
 }
 
 function saveSettings() {
-    chrome.storage.sync.set({ frictionMode, recordUnlocks });
+    chrome.storage.sync.set({ frictionMode, recordUnlocks, trackBlockCounts });
 }
 
 function renderSettings() {
     document.getElementById('frictionModeToggle').checked = frictionMode;
     document.getElementById('recordUnlocksToggle').checked = recordUnlocks;
-    document.getElementById('historyTab').style.display = recordUnlocks ? 'flex' : 'none';
+    document.getElementById('trackBlockCountsToggle').checked = trackBlockCounts;
+    document.getElementById('historyTab').style.display =
+        (recordUnlocks || trackBlockCounts) ? 'flex' : 'none';
 }
 
 function showFrictionChallenge(callback) {
@@ -503,11 +516,65 @@ function pruneUnlockLog() {
     }
 }
 
+function loadBlockCounts() {
+    chrome.storage.sync.get(['blockCounts'], (result) => {
+        blockCounts = result.blockCounts || {};
+        // Prune entries older than 7 days
+        const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        let pruned = false;
+        for (const date of Object.keys(blockCounts)) {
+            if (date < cutoff) {
+                delete blockCounts[date];
+                pruned = true;
+            }
+        }
+        if (pruned) {
+            chrome.storage.sync.set({ blockCounts });
+        }
+    });
+}
+
+function renderBlockCountsSummary() {
+    const container = document.getElementById('blockCountsSummary');
+    if (!trackBlockCounts) {
+        container.style.display = 'none';
+        return;
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+    const todayCounts = blockCounts[today];
+    if (!todayCounts || Object.keys(todayCounts).length === 0) {
+        container.style.display = 'none';
+        return;
+    }
+
+    const sorted = Object.entries(todayCounts).sort((a, b) => b[1] - a[1]);
+    const total = sorted.reduce((sum, [, count]) => sum + count, 0);
+
+    let html = `<div class="block-counts-header"><h3>Today's Blocks</h3><span class="block-total-badge">${total}</span></div>`;
+    for (const [bucket, count] of sorted) {
+        html += `<div class="block-count-row">
+            <span class="block-count-name">${bucket}</span>
+            <span class="block-count-badge">${count}</span>
+        </div>`;
+    }
+
+    container.innerHTML = html;
+    container.style.display = 'block';
+}
+
 function renderHistory() {
+    renderBlockCountsSummary();
+
+    const unlockSection = document.getElementById('unlockHistorySection');
+    unlockSection.style.display = recordUnlocks ? 'block' : 'none';
+
     const container = document.getElementById('historyEntries');
 
-    if (unlockLog.length === 0) {
-        container.innerHTML = '<div class="history-empty">No unlock history yet.</div>';
+    if (!recordUnlocks || unlockLog.length === 0) {
+        if (recordUnlocks) {
+            container.innerHTML = '<div class="history-empty">No unlock history yet.</div>';
+        }
         return;
     }
 

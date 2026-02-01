@@ -67,15 +67,28 @@
                     <span class="slider"></span>
                 </label>
             </div>
+            <div class="setting-item" style="margin-top: 10px;">
+                <div class="setting-info">
+                    <h3>Track Block Attempts</h3>
+                    <p class="setting-description">Count every time you hit a blocked site. Per-bucket counts are shown in the History tab. Data kept for 7 days.</p>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="trackBlockCountsToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
         </div>
     </div>
 
     <div id="historyView" class="tab-section" style="display: none;">
-        <div class="history-header">
-            <h3>Unlock History</h3>
-            <button id="clearHistory" class="secondary">Clear History</button>
+        <div id="blockCountsSummary" style="display: none;"></div>
+        <div id="unlockHistorySection">
+            <div class="history-header">
+                <h3>Unlock History</h3>
+                <button id="clearHistory" class="secondary">Clear History</button>
+            </div>
+            <div id="historyEntries"></div>
         </div>
-        <div id="historyEntries"></div>
     </div>
 
     <div id="frictionModal" class="modal-overlay" style="display: none;">

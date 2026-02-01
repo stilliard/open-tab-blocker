@@ -517,3 +517,55 @@ button.secondary:hover {
     padding: 40px 10px;
     font-style: italic;
 }
+
+/* Block Counts Summary */
+#blockCountsSummary {
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.block-counts-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.block-counts-header h3 {
+    margin: 0;
+}
+
+.block-total-badge {
+    background: #d32f2f;
+    color: white;
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-size: 0.85em;
+    font-weight: bold;
+}
+
+.block-count-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 4px;
+    margin-bottom: 4px;
+    background: #f5f5f5;
+}
+
+.block-count-name {
+    font-size: 0.9em;
+    color: #333;
+}
+
+.block-count-badge {
+    background: #ffcdd2;
+    color: #c62828;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.8em;
+    font-weight: bold;
+    min-width: 20px;
+    text-align: center;
+}

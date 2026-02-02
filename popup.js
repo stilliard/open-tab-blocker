@@ -6,6 +6,10 @@ let trackBlockCounts = false;
 let focusSessions = false;
 let blockCounts = {};
 let unlockLog = [];
+let takeABreak = false;
+let breakSession = null;
+let lastBreakDate = null;
+let breakCountdownInterval = null;
 let pendingFrictionCallback = null;
 let focusSession = null;
 let focusCountdownInterval = null;
@@ -31,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadUnlockLog();
     loadBlockCounts();
     loadFocusSession();
+    loadBreakSession();
     setupEventListeners();
 });
 
@@ -90,6 +95,16 @@ function setupEventListeners() {
         renderSettings();
     });
 
+    // Take a Break toggle
+    document.getElementById('takeABreakToggle').addEventListener('change', (e) => {
+        takeABreak = e.target.checked;
+        if (!takeABreak && breakSession) {
+            endBreak();
+        }
+        saveSettings();
+        renderSettings();
+    });
+
     // Clear history button
     document.getElementById('clearHistory').addEventListener('click', () => {
         unlockLog = [];
@@ -128,6 +143,16 @@ function setupEventListeners() {
 
     // Focus session end early button
     document.getElementById('focusEndEarly').addEventListener('click', endFocusSession);
+
+    // Break session buttons
+    document.getElementById('breakStartBtn').addEventListener('click', () => {
+        if (frictionMode) {
+            showFrictionChallenge(() => startBreak());
+        } else {
+            startBreak();
+        }
+    });
+    document.getElementById('breakEndBtn').addEventListener('click', endBreak);
 
     // Bucket list event delegation
     document.getElementById('bucketList').addEventListener('click', (e) => {
@@ -490,17 +515,18 @@ function loadBuckets() {
 }
 
 function loadSettings() {
-    chrome.storage.sync.get(['frictionMode', 'recordUnlocks', 'trackBlockCounts', 'focusSessions'], (result) => {
+    chrome.storage.sync.get(['frictionMode', 'recordUnlocks', 'trackBlockCounts', 'focusSessions', 'takeABreak'], (result) => {
         frictionMode = result.frictionMode || false;
         recordUnlocks = result.recordUnlocks || false;
         trackBlockCounts = result.trackBlockCounts || false;
         focusSessions = result.focusSessions || false;
+        takeABreak = result.takeABreak || false;
         renderSettings();
     });
 }
 
 function saveSettings() {
-    chrome.storage.sync.set({ frictionMode, recordUnlocks, trackBlockCounts, focusSessions });
+    chrome.storage.sync.set({ frictionMode, recordUnlocks, trackBlockCounts, focusSessions, takeABreak });
 }
 
 function renderSettings() {
@@ -508,9 +534,11 @@ function renderSettings() {
     document.getElementById('recordUnlocksToggle').checked = recordUnlocks;
     document.getElementById('trackBlockCountsToggle').checked = trackBlockCounts;
     document.getElementById('focusSessionsToggle').checked = focusSessions;
+    document.getElementById('takeABreakToggle').checked = takeABreak;
     document.getElementById('historyTab').style.display =
         (recordUnlocks || trackBlockCounts) ? 'flex' : 'none';
     document.getElementById('focusBar').style.display = focusSessions ? 'block' : 'none';
+    renderBreakBar();
 }
 
 function showFrictionChallenge(callback) {
@@ -707,6 +735,13 @@ function renderFocusBar() {
         focusCountdownInterval = null;
     }
 
+    // Hide focus presets during active break
+    if (!focusSession && breakSession) {
+        idleEl.style.display = 'none';
+        activeEl.style.display = 'none';
+        return;
+    }
+
     if (!focusSession) {
         idleEl.style.display = 'flex';
         activeEl.style.display = 'none';
@@ -736,6 +771,122 @@ function renderFocusBar() {
 
     updateCountdown();
     focusCountdownInterval = setInterval(updateCountdown, 1000);
+}
+
+function loadBreakSession() {
+    chrome.storage.sync.get(['breakSession', 'lastBreakDate'], (result) => {
+        breakSession = result.breakSession || null;
+        lastBreakDate = result.lastBreakDate || null;
+        if (breakSession && Date.now() >= breakSession.endTime) {
+            // Session expired while popup was closed — clean up
+            breakSession = null;
+            chrome.storage.sync.set({ breakSession: null });
+        }
+        renderBreakBar();
+    });
+}
+
+function startBreak() {
+    const endTime = Date.now() + 5 * 60 * 1000;
+    const previousStates = {};
+
+    for (const bucket of buckets) {
+        previousStates[bucket.name] = bucket.enabled;
+        bucket.enabled = false;
+    }
+
+    breakSession = { endTime, previousStates };
+    const today = new Date().toISOString().slice(0, 10);
+    lastBreakDate = today;
+
+    chrome.storage.sync.set({ breakSession, lastBreakDate, buckets }, () => {
+        chrome.alarms.create('breakSessionEnd', { when: endTime });
+        renderBuckets();
+        renderBreakBar();
+        renderFocusBar();
+    });
+}
+
+function endBreak() {
+    if (!breakSession) return;
+
+    for (const bucket of buckets) {
+        if (bucket.name in breakSession.previousStates) {
+            bucket.enabled = breakSession.previousStates[bucket.name];
+        }
+    }
+
+    breakSession = null;
+
+    chrome.alarms.clear('breakSessionEnd');
+    chrome.storage.sync.set({ breakSession: null, buckets }, () => {
+        renderBuckets();
+        renderBreakBar();
+        renderFocusBar();
+    });
+}
+
+function renderBreakBar() {
+    const breakBar = document.getElementById('breakBar');
+    const idleEl = document.getElementById('breakIdle');
+    const activeEl = document.getElementById('breakActive');
+    const availableEl = document.getElementById('breakAvailable');
+    const usedEl = document.getElementById('breakUsed');
+
+    if (breakCountdownInterval) {
+        clearInterval(breakCountdownInterval);
+        breakCountdownInterval = null;
+    }
+
+    // Hidden when feature is disabled or focus session is active
+    if (!takeABreak || focusSession) {
+        breakBar.style.display = 'none';
+        return;
+    }
+
+    breakBar.style.display = 'block';
+
+    if (breakSession) {
+        // Active state
+        idleEl.style.display = 'none';
+        activeEl.style.display = 'flex';
+
+        function updateBreakCountdown() {
+            const remaining = breakSession.endTime - Date.now();
+            if (remaining <= 0) {
+                clearInterval(breakCountdownInterval);
+                breakCountdownInterval = null;
+                breakSession = null;
+                chrome.storage.sync.set({ breakSession: null });
+                loadBuckets();
+                renderBreakBar();
+                return;
+            }
+            const totalSeconds = Math.ceil(remaining / 1000);
+            const m = Math.floor(totalSeconds / 60);
+            const s = totalSeconds % 60;
+            document.getElementById('breakCountdown').textContent =
+                String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        }
+
+        updateBreakCountdown();
+        breakCountdownInterval = setInterval(updateBreakCountdown, 1000);
+    } else {
+        // Idle state
+        idleEl.style.display = 'flex';
+        activeEl.style.display = 'none';
+
+        const today = new Date().toISOString().slice(0, 10);
+        if (lastBreakDate === today) {
+            // Already used today
+            availableEl.style.display = 'none';
+            usedEl.style.display = 'block';
+        } else {
+            // Available
+            availableEl.style.display = 'block';
+            usedEl.style.display = 'none';
+        }
+    }
 }
 
 function formatDuration(ms) {

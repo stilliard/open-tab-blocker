@@ -592,6 +592,88 @@ button.secondary:hover {
     color: white;
 }
 
+/* Break Bar */
+.break-bar {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background-color: #f8f8f8;
+    margin-bottom: 10px;
+}
+
+.break-idle,
+.break-active {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.break-label {
+    font-weight: bold;
+    font-size: 0.9em;
+    color: #333;
+    white-space: nowrap;
+}
+
+.break-available {
+    flex: 1;
+}
+
+.break-btn {
+    padding: 6px 0;
+    width: 100%;
+    border: 1px solid #4caf50;
+    border-radius: 4px;
+    background: white;
+    color: #4caf50;
+    font-weight: bold;
+    font-size: 0.85em;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.break-btn:hover {
+    background-color: #4caf50;
+    color: white;
+}
+
+.break-used {
+    flex: 1;
+}
+
+.break-used-text {
+    font-size: 0.85em;
+    color: #999;
+    font-style: italic;
+}
+
+.break-countdown {
+    font-size: 1.3em;
+    font-weight: bold;
+    font-variant-numeric: tabular-nums;
+    color: #2e7d32;
+    flex: 1;
+    text-align: center;
+}
+
+.break-end-btn {
+    padding: 6px 12px;
+    border: 1px solid #4caf50;
+    border-radius: 4px;
+    background: white;
+    color: #4caf50;
+    font-size: 0.85em;
+    font-weight: bold;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.break-end-btn:hover {
+    background-color: #4caf50;
+    color: white;
+}
+
 /* Block Counts Summary */
 #blockCountsSummary {
     padding: 10px;

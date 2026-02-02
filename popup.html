@@ -56,6 +56,22 @@
                 <button id="focusEndEarly" class="focus-end-btn">End Early</button>
             </div>
         </div>
+        <div id="breakBar" class="break-bar" style="display: none;">
+            <div id="breakIdle" class="break-idle">
+                <span class="break-label">Break</span>
+                <div id="breakAvailable" class="break-available">
+                    <button id="breakStartBtn" class="break-btn">Take a 5 minute break</button>
+                </div>
+                <div id="breakUsed" class="break-used" style="display: none;">
+                    <span class="break-used-text">Used today</span>
+                </div>
+            </div>
+            <div id="breakActive" class="break-active" style="display: none;">
+                <span class="break-label">Break</span>
+                <span id="breakCountdown" class="break-countdown">00:00</span>
+                <button id="breakEndBtn" class="break-end-btn">End Break</button>
+            </div>
+        </div>
         <div id="bucketList" class="bucket-list">
             <!-- Buckets will be inserted here dynamically -->
         </div>
@@ -90,6 +106,16 @@
                 </div>
                 <label class="toggle-switch">
                     <input type="checkbox" id="focusSessionsToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-item" style="margin-top: 10px;">
+                <div class="setting-info">
+                    <h3>Take a Break</h3>
+                    <p class="setting-description">Allow one 5-minute break per day. While active, all buckets are temporarily disabled. Requires Friction Mode challenge if enabled.</p>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="takeABreakToggle">
                     <span class="slider"></span>
                 </label>
             </div>

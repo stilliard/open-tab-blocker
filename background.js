@@ -112,21 +112,35 @@ function isTimeInRange(currentTime, startTime, endTime) {
 }
 
 chrome.alarms.onAlarm.addListener((alarm) => {
-    if (alarm.name !== 'focusSessionEnd') return;
+    if (alarm.name === 'focusSessionEnd') {
+        chrome.storage.sync.get(['focusSession', 'buckets'], (result) => {
+            const session = result.focusSession;
+            if (!session) return;
 
-    chrome.storage.sync.get(['focusSession', 'buckets'], (result) => {
-        const session = result.focusSession;
-        if (!session) return;
-
-        const buckets = result.buckets || [];
-        for (const bucket of buckets) {
-            if (bucket.name in session.previousStates) {
-                bucket.enabled = session.previousStates[bucket.name];
+            const buckets = result.buckets || [];
+            for (const bucket of buckets) {
+                if (bucket.name in session.previousStates) {
+                    bucket.enabled = session.previousStates[bucket.name];
+                }
             }
-        }
 
-        chrome.storage.sync.set({ buckets, focusSession: null });
-    });
+            chrome.storage.sync.set({ buckets, focusSession: null });
+        });
+    } else if (alarm.name === 'breakSessionEnd') {
+        chrome.storage.sync.get(['breakSession', 'buckets'], (result) => {
+            const session = result.breakSession;
+            if (!session) return;
+
+            const buckets = result.buckets || [];
+            for (const bucket of buckets) {
+                if (bucket.name in session.previousStates) {
+                    bucket.enabled = session.previousStates[bucket.name];
+                }
+            }
+
+            chrome.storage.sync.set({ buckets, breakSession: null });
+        });
+    }
 });
 
 function incrementBlockCount(bucketName, callback) {

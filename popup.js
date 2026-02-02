@@ -29,6 +29,15 @@ const frictionSentences = [
     "I will regret this when the deadline hits",
 ];
 
+const breakFrictionSentences = [
+    "I am choosing to take my daily break",
+    "I will return to focused work in five minutes",
+    "This is a short pause and then I get back on track",
+    "Five minutes of rest then back to what matters",
+    "I am taking a break not giving up",
+    "A brief reset to come back stronger",
+];
+
 document.addEventListener('DOMContentLoaded', () => {
     loadBuckets();
     loadSettings();
@@ -147,7 +156,7 @@ function setupEventListeners() {
     // Break session buttons
     document.getElementById('breakStartBtn').addEventListener('click', () => {
         if (frictionMode) {
-            showFrictionChallenge(() => startBreak());
+            showFrictionChallenge(() => startBreak(), breakFrictionSentences);
         } else {
             startBreak();
         }
@@ -541,9 +550,10 @@ function renderSettings() {
     renderBreakBar();
 }
 
-function showFrictionChallenge(callback) {
+function showFrictionChallenge(callback, sentences) {
     pendingFrictionCallback = callback;
-    const sentence = frictionSentences[Math.floor(Math.random() * frictionSentences.length)];
+    const list = sentences || frictionSentences;
+    const sentence = list[Math.floor(Math.random() * list.length)];
     document.getElementById('frictionSentence').textContent = sentence;
     document.getElementById('frictionInput').value = '';
     document.getElementById('frictionInput').classList.remove('match', 'no-match');

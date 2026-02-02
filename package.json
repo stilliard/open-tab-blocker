@@ -10,6 +10,6 @@
   "license": "MIT",
   "description": "Open Tab Blocker - Chrome Extension",
   "devDependencies": {
-    "web-ext": "^8.3.0"
+    "web-ext": "^9.2.0"
   }
 }

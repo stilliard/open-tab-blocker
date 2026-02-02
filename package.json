@@ -1,6 +1,6 @@
 {
   "name": "open-tab-blocker",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "main": "background.js",
   "scripts": {
     "build": "web-ext build --overwrite-dest"
